@@ -80,8 +80,3 @@ Uses the [Retail Store Inventory Dataset](https://www.kaggle.com/datasets/sandhy
 
 ---
 
-## Roadmap
-
-- [x] Day 1 — Data pipeline, rule engine, classifier
-- [ ] Day 2 — Claude API enrichment & AI-generated summaries
-- [ ] Day 3 — FastAPI backend + dashboard UI
