@@ -2,13 +2,14 @@
 main.py
 -------
 ShelfGuard entry point.
-Runs the full Day 1 pipeline:
-  Ingest → Normalize → Detect → Classify → Report
+Runs the full pipeline:
+  Ingest → Normalize → Detect → Classify → (AI Enrich) → Report
 
 Usage:
-  python main.py                          # run on full dataset
-  python main.py --sample 5000           # quick demo run
-  python main.py --ai                    # enable AI enrichment (Day 2)
+  python main.py                  # run on full dataset (73,100 records)
+  python main.py --sample 5000    # quick demo run
+  python main.py --ai             # enable AI enrichment (Day 2)
+  python main.py --sample 5000 --ai
 """
 
 import json
@@ -50,11 +51,11 @@ def run_pipeline(filepath: str, enrich_with_ai: bool = False, sample: int = None
     flagged_df   = apply_rules(normalized_df)
     anomalies_df = get_anomalies(flagged_df)
 
-    # ── Step 4: Classify top 50 by severity ──────────────────
+    # ── Step 4: Classify ALL anomalies by severity ───────────
     all_anomaly_records = to_records(anomalies_df)
     all_anomaly_records.sort(key=lambda x: x.get("severity_score", 0), reverse=True)
-    top_50 = all_anomaly_records[:50]
-    classified = classify_all(top_50)
+    classified = classify_all(all_anomaly_records)
+    logger.info(f"Classified {len(classified):,} anomalies.")
 
     # ── Step 5: AI Enrichment (Day 2) ────────────────────────
     if enrich_with_ai:
@@ -64,16 +65,16 @@ def run_pipeline(filepath: str, enrich_with_ai: bool = False, sample: int = None
 
     # ── Build Report ─────────────────────────────────────────
     report = {
-        "report_id":               f"SG-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-        "generated_at":            datetime.now().isoformat(),
-        "source_file":             filepath,
-        "dataset_summary":         dataset_summary,
-        "total_records_scanned":   len(flagged_df),
-        "total_anomalies_detected":len(anomalies_df),
-        "anomalies_in_report":     len(classified),
-        "severity_breakdown":      _count_by(all_anomaly_records, "severity"),
-        "anomaly_type_breakdown":  _count_by(classified, "anomaly_type"),
-        "top_anomalies":           classified,
+        "report_id":                f"SG-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
+        "generated_at":             datetime.now().isoformat(),
+        "source_file":              filepath,
+        "dataset_summary":          dataset_summary,
+        "total_records_scanned":    len(flagged_df),
+        "total_anomalies_detected": len(anomalies_df),
+        "anomalies_in_report":      len(classified),
+        "severity_breakdown":       _count_by(classified, "severity"),
+        "anomaly_type_breakdown":   _count_by(classified, "anomaly_type"),
+        "top_anomalies":            classified,
     }
 
     # ── Save Report ──────────────────────────────────────────
@@ -109,6 +110,7 @@ if __name__ == "__main__":
     print(f"  Report ID          : {report['report_id']}")
     print(f"  Records Scanned    : {report['total_records_scanned']:,}")
     print(f"  Anomalies Detected : {report['total_anomalies_detected']:,}")
+    print(f"  Anomalies in Report: {report['anomalies_in_report']:,}")
     print(f"  Severity Breakdown : {report['severity_breakdown']}")
     print(f"  Anomaly Types      : {report['anomaly_type_breakdown']}")
     print(f"  Report Saved To    : data/reports/{report['report_id']}.json")
