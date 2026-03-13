@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShelfGuard — Inventory Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #141824;
+      --surface2: #1e293b;
+      --border: #2d3748;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --accent: #3b82f6;
+      --accent2: #10b981;
+      --accent3: #06b6d4;
+      --accent4: #8b5cf6;
+      --critical: #ef4444;
+      --high: #f59e0b;
+      --medium: #3b82f6;
+      --low: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,14,26,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .logo span { color: var(--accent); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent4);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    .status-text {
+      font-size: 0.75rem;
+      color: var(--accent4);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .run-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+    }
+
+    .run-btn:hover { background: var(--accent3); transform: translateY(-1px); }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Main Layout ── */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* ── Section Title ── */
+    .section-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Stats Grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover { border-color: var(--accent); }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-accent, var(--accent));
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      margin-bottom: 0.6rem;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+
+    .stat-sub {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 0.4rem;
+    }
+
+    /* ── Severity Bar ── */
+    .severity-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem;
+      margin-bottom: 2rem;
+    }
+
+    .severity-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .severity-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .severity-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      width: 70px;
+      flex-shrink: 0;
+    }
+
+    .severity-bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .severity-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s ease;
+    }
+
+    .severity-count {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      width: 40px;
+      text-align: right;
+    }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+    }
+
+    .filter-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+      font-weight: 600;
+    }
+
+    .filter-btn.critical.active  { border-color: var(--critical); color: var(--critical); background: rgba(255,61,113,0.05); }
+    .filter-btn.high.active      { border-color: var(--high); color: var(--high); background: rgba(255,170,0,0.05); }
+    .filter-btn.medium.active    { border-color: var(--medium); color: var(--medium); background: rgba(0,170,255,0.05); }
+
+    /* ── Table ── */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background: var(--surface2);
+      text-align: left;
+      padding: 0.8rem 1rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody tr.selected { background: rgba(0,229,255,0.05); border-left: 2px solid var(--accent); }
+
+    td {
+      padding: 0.85rem 1rem;
+      font-size: 0.78rem;
+    }
+
+    /* Severity badges */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .badge-critical { background: rgba(255,61,113,0.15); color: var(--critical); border: 1px solid rgba(255,61,113,0.3); }
+    .badge-high     { background: rgba(255,170,0,0.15);  color: var(--high);     border: 1px solid rgba(255,170,0,0.3); }
+    .badge-medium   { background: rgba(0,170,255,0.15);  color: var(--medium);   border: 1px solid rgba(0,170,255,0.3); }
+    .badge-low      { background: rgba(0,224,150,0.15);  color: var(--low);      border: 1px solid rgba(0,224,150,0.3); }
+
+    .type-tag {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Detail Panel ── */
+    .detail-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 1.6rem;
+      margin-top: 1.5rem;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-panel.visible { display: block; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.2rem;
+    }
+
+    .detail-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .detail-close {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .detail-close:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .detail-field { }
+
+    .detail-field-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.3rem;
+    }
+
+    .detail-field-value {
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+
+    .ai-section {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-top: 1rem;
+    }
+
+    .ai-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .ai-summary { font-size: 0.82rem; line-height: 1.6; color: var(--text); margin-bottom: 1rem; }
+
+    .ai-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+    }
+
+    .ai-field-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.2rem;
+    }
+
+    .ai-field-value { font-size: 0.8rem; }
+
+    .urgency-immediate { color: var(--critical); }
+    .urgency-24h       { color: var(--high); }
+    .urgency-week      { color: var(--medium); }
+    .urgency-monitor   { color: var(--low); }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+
+    /* ── Report Meta ── */
+    .report-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+
+    .meta-item span { color: var(--text); }
+
+    /* ── Pagination ── */
+    .pagination-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .pagination-info {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .pagination-btns {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .page-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .page-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .page-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    .page-ellipsis {
+      padding: 0.4rem 0.8rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛒</div>
+      Shelf<span>Guard</span>
+    </div>
+    <div class="header-right">
+      <div class="status-dot"></div>
+      <div class="status-text">Live</div>
+      <button class="run-btn" onclick="runPipeline()" id="runBtn">↻ Run Pipeline</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Report Meta -->
+    <div class="report-meta" id="reportMeta"></div>
+
+    <!-- Stats -->
+    <div class="section-title">Overview</div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="loading"><div class="spinner"></div>Loading...</div>
+    </div>
+
+    <!-- Severity Breakdown -->
+    <div class="severity-section" id="severitySection" style="display:none">
+      <div class="section-title" style="margin-bottom:0">Severity Distribution</div>
+      <div class="severity-bars" id="severityBars"></div>
+    </div>
+
+    <!-- Anomalies Table -->
+    <div class="section-title" style="margin-top:2rem">Anomalies</div>
+
+    <div class="filters" id="filters">
+      <button class="filter-btn active" onclick="setFilter('ALL', this)">All</button>
+      <button class="filter-btn critical" onclick="setFilter('CRITICAL', this)">Critical</button>
+      <button class="filter-btn high" onclick="setFilter('HIGH', this)">High</button>
+      <button class="filter-btn medium" onclick="setFilter('MEDIUM', this)">Medium</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Store</th>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Anomaly Type</th>
+            <th>Sales vs Forecast</th>
+            <th>Inventory</th>
+            <th>AI Enriched</th>
+          </tr>
+        </thead>
+        <tbody id="anomalyTable">
+          <tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading anomalies...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination"></div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-header">
+        <div class="detail-title" id="detailTitle">Anomaly Detail</div>
+        <button class="detail-close" onclick="closeDetail()">✕</button>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+
+  </main>
+
+  <script>
+    const API = 'http://localhost:8000';
+    let allAnomalies = [];
+    let currentFilter = 'ALL';
+    let selectedRow = null;
+    let currentPage = 1;
+    const itemsPerPage = 100;
+
+    // ── Boot ────────────────────────────────────────────────
+    async function init() {
+      await loadSummary();
+      await loadAnomalies();
+    }
+
+    // ── Load Summary ────────────────────────────────────────
+    async function loadSummary() {
+      try {
+        const res = await fetch(`${API}/api/summary`);
+        const data = await res.json();
+        renderStats(data);
+        renderMeta(data);
+      } catch (e) {
+        document.getElementById('statsGrid').innerHTML =
+          `<div class="empty">⚠ Could not connect to API.<br>Make sure the server is running:<br><code>uvicorn api.main:app --reload</code></div>`;
+      }
+    }
+
+    // ── Load Anomalies ───────────────────────────────────────
+    async function loadAnomalies() {
+      try {
+        const res = await fetch(`${API}/api/anomalies`);
+        const data = await res.json();
+        allAnomalies = data.anomalies || [];
+        currentPage = 1; // Reset to first page
+        renderTable();
+      } catch (e) {
+        document.getElementById('anomalyTable').innerHTML =
+          `<tr><td colspan="8"><div class="empty">Could not load anomalies.</div></td></tr>`;
+      }
+    }
+
+    // ── Render Stats ─────────────────────────────────────────
+    function renderStats(data) {
+      const sb = data.severity_breakdown || {};
+      const tb = data.anomaly_type_breakdown || {};
+
+      const cards = [
+        { label: 'Records Scanned',    value: (data.total_records_scanned || 0).toLocaleString(), accent: 'var(--accent)',  sub: data.dataset_summary?.date_range ? `${data.dataset_summary.date_range.start} → ${data.dataset_summary.date_range.end}` : '' },
+        { label: 'Anomalies Detected', value: (data.total_anomalies_detected || 0).toLocaleString(), accent: 'var(--accent2)', sub: 'Flagged for review' },
+        { label: 'Critical',           value: sb.CRITICAL || 0, accent: 'var(--critical)', sub: 'Immediate action required' },
+        { label: 'High',               value: sb.HIGH || 0,     accent: 'var(--high)',     sub: 'Within 24 hours' },
+        { label: 'Stores Affected',    value: data.dataset_summary?.stores || 0, accent: 'var(--accent4)', sub: `${data.dataset_summary?.products || 0} products monitored` },
+      ];
+
+      document.getElementById('statsGrid').innerHTML = cards.map(c => `
+        <div class="stat-card" style="--card-accent: ${c.accent}">
+          <div class="stat-label">${c.label}</div>
+          <div class="stat-value">${c.value}</div>
+          ${c.sub ? `<div class="stat-sub">${c.sub}</div>` : ''}
+        </div>
+      `).join('');
+
+      // Severity bars
+      const total = (sb.CRITICAL||0) + (sb.HIGH||0) + (sb.MEDIUM||0) + (sb.LOW||0);
+      const bars = [
+        { label: 'Critical', count: sb.CRITICAL||0, color: 'var(--critical)' },
+        { label: 'High',     count: sb.HIGH||0,     color: 'var(--high)' },
+        { label: 'Medium',   count: sb.MEDIUM||0,   color: 'var(--medium)' },
+        { label: 'Low',      count: sb.LOW||0,       color: 'var(--low)' },
+      ];
+
+      document.getElementById('severityBars').innerHTML = bars.map(b => `
+        <div class="severity-row">
+          <div class="severity-label" style="color:${b.color}">${b.label}</div>
+          <div class="severity-bar-track">
+            <div class="severity-bar-fill" style="width:${total ? (b.count/total*100) : 0}%; background:${b.color}"></div>
+          </div>
+          <div class="severity-count">${b.count}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('severitySection').style.display = 'block';
+    }
+
+    // ── Render Meta ──────────────────────────────────────────
+    function renderMeta(data) {
+      document.getElementById('reportMeta').innerHTML = `
+        <div class="meta-item">Report <span>${data.report_id || '—'}</span></div>
+        <div class="meta-item">Generated <span>${data.generated_at ? new Date(data.generated_at).toLocaleString() : '—'}</span></div>
+        <div class="meta-item">Categories <span>${(data.dataset_summary?.categories || []).join(', ')}</span></div>
+      `;
+    }
+
+    // ── Render Table ─────────────────────────────────────────
+    function renderTable() {
+      const filtered = currentFilter === 'ALL'
+        ? allAnomalies
+        : allAnomalies.filter(a => a.severity === currentFilter);
+
+      if (!filtered.length) {
+        document.getElementById('anomalyTable').innerHTML =
+          `<tr><td colspan="8"><div class="empty">No anomalies match this filter.</div></td></tr>`;
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+
+      // Calculate pagination
+      const totalPages = Math.ceil(filtered.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const pageData = filtered.slice(startIndex, endIndex);
+
+      // Render table rows
+      document.getElementById('anomalyTable').innerHTML = pageData.map((a, i) => {
+        const actualIndex = startIndex + i; // Actual index in filtered array
+        const sev = (a.severity || 'low').toLowerCase();
+        const disc = a.sales_discrepancy_pct != null ? `${a.sales_discrepancy_pct.toFixed(1)}%` : '—';
+        const discColor = a.sales_discrepancy_pct < 0 ? 'var(--critical)' : 'var(--accent4)';
+        return `
+          <tr onclick="selectRow(this, ${actualIndex})" data-idx="${actualIndex}">
+            <td><span class="badge badge-${sev}">${a.severity || '—'}</span></td>
+            <td>${a['Store ID'] || '—'}</td>
+            <td>${a['Product ID'] || '—'}</td>
+            <td>${a.Category || '—'}</td>
+            <td><span class="type-tag">${a.anomaly_type || '—'}</span></td>
+            <td style="color:${discColor}">${disc}</td>
+            <td>${a['Inventory Level'] ?? '—'}</td>
+            <td style="color:${a.ai_enriched ? 'var(--accent4)' : 'var(--text-dim)'}">${a.ai_enriched ? '✓ Yes' : '—'}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Render pagination controls
+      renderPagination(totalPages, filtered.length);
+    }
+
+    // ── Render Pagination ────────────────────────────────────
+    function renderPagination(totalPages, totalItems) {
+      const pagination = [];
+      const maxVisible = 7; // Show max 7 page numbers
+      
+      if (totalPages <= maxVisible) {
+        // Show all pages if less than maxVisible
+        for (let i = 1; i <= totalPages; i++) {
+          pagination.push(`
+            <button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>
+          `);
+        }
+      } else {
+        // Smart pagination with ellipsis
+        pagination.push(`
+          <button class="page-btn ${1 === currentPage ? 'active' : ''}" onclick="changePage(1)">1</button>
+        `);
+        
+        if (currentPage > 3) {
+          pagination.push(`<span class="page-ellipsis">...</span>`);
+        }
+        
+        // Show pages around current
+        let start = Math.max(2, currentPage - 1);
+        let end = Math.min(totalPages - 1, currentPage + 1);
+        
+        for (let i = start; i <= end; i++) {
+          pagination.push(`
+            <button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>
+          `);
+        }
+        
+        if (currentPage < totalPages - 2) {
+          pagination.push(`<span class="page-ellipsis">...</span>`);
+        }
+        
+        pagination.push(`
+          <button class="page-btn ${totalPages === currentPage ? 'active' : ''}" onclick="changePage(${totalPages})">${totalPages}</button>
+        `);
+      }
+      
+      document.getElementById('pagination').innerHTML = `
+        <div class="pagination-controls">
+          <div class="pagination-info">${currentPage} of ${totalPages} pages (${totalItems} items)</div>
+          <div class="pagination-btns">${pagination.join('')}</div>
+        </div>
+      `;
+    }
+
+    // ── Change Page ──────────────────────────────────────────
+    function changePage(page) {
+      currentPage = page;
+      renderTable();
+    }
+
+    // ── Filter ───────────────────────────────────────────────
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      currentPage = 1; // Reset to first page when filtering
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable();
+      closeDetail();
+    }
+
+    // ── Row Select ───────────────────────────────────────────
+    function selectRow(row, idx) {
+      document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
+      row.classList.add('selected');
+
+      const filtered = currentFilter === 'ALL'
+        ? allAnomalies
+        : allAnomalies.filter(a => a.severity === currentFilter);
+
+      showDetail(filtered[idx]);
+    }
+
+    // ── Detail Panel ─────────────────────────────────────────
+    function showDetail(a) {
+      document.getElementById('detailTitle').textContent =
+        `${a['Product ID']} — ${a.Category} @ ${a['Store ID']}`;
+
+      const urgencyClass = {
+        'IMMEDIATE':      'urgency-immediate',
+        'WITHIN_24_HOURS':'urgency-24h',
+        'THIS_WEEK':      'urgency-week',
+        'MONITOR':        'urgency-monitor',
+      }[a.ai_urgency] || '';
+
+      document.getElementById('detailContent').innerHTML = `
+        <div class="detail-grid">
+          <div class="detail-field"><div class="detail-field-label">Date</div><div class="detail-field-value">${a.Date || '—'}</div></div>
+          <div class="detail-field"><div class="detail-field-label">Region</div><div class="detail-field-value">${a.Region || '—'}</div></div>
+          <div class="detail-field"><div class="detail-field-label">Units Sold</div><div class="detail-field-value">${a['Units Sold'] ?? '—'}</div></div>
+          <div class="detail-field"><div class="detail-field-label">Demand Forecast</div><div class="detail-field-value">${a['Demand Forecast'] ?? '—'}</div></div>
+          <div class="detail-field"><div class="detail-field-label">Inventory Level</div><div class="detail-field-value">${a['Inventory Level'] ?? '—'}</div></div>
+          <div class="detail-field"><div class="detail-field-label">Unit Price</div><div class="detail-field-value">$${a.Price?.toFixed(2) ?? '—'}</div></div>
+          <div class="detail-field"><div class="detail-field-label">Competitor Price</div><div class="detail-field-value">$${a['Competitor Pricing']?.toFixed(2) ?? '—'}</div></div>
+          <div class="detail-field"><div class="detail-field-label">Severity Score</div><div class="detail-field-value">${a.severity_score ?? '—'}</div></div>
+        </div>
+
+        <div class="detail-field" style="margin-bottom:1rem">
+          <div class="detail-field-label">Flags Triggered</div>
+          <div class="detail-field-value" style="color:var(--accent2)">${(a.anomaly_flags || []).join(' · ') || '—'}</div>
+        </div>
+
+        <div class="detail-field" style="margin-bottom:1rem">
+          <div class="detail-field-label">Rule-Based Rationale</div>
+          <div class="detail-field-value" style="color:var(--text-dim)">${a.rationale || '—'}</div>
+        </div>
+
+        ${a.ai_enriched ? `
+        <div class="ai-section">
+          <div class="ai-label">⚡ AI Investigation Summary</div>
+          <div class="ai-summary">${a.ai_investigation_summary || '—'}</div>
+          <div class="ai-fields">
+            <div>
+              <div class="ai-field-label">Likely Cause</div>
+              <div class="ai-field-value">${a.ai_likely_cause || '—'}</div>
+            </div>
+            <div>
+              <div class="ai-field-label">Recommended Action</div>
+              <div class="ai-field-value" style="color:var(--accent4)">${a.ai_recommended_action || '—'}</div>
+            </div>
+            <div>
+              <div class="ai-field-label">Urgency</div>
+              <div class="ai-field-value ${urgencyClass}">${a.ai_urgency || '—'}</div>
+            </div>
+            <div>
+              <div class="ai-field-label">AI Confidence</div>
+              <div class="ai-field-value">${a.ai_confidence || '—'}</div>
+            </div>
+          </div>
+        </div>
+        ` : `<div class="ai-section" style="border-left-color:var(--text-dim)">
+          <div class="ai-label" style="color:var(--text-dim)">AI enrichment not available for this record</div>
+        </div>`}
+      `;
+
+      document.getElementById('detailPanel').classList.add('visible');
+      document.getElementById('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeDetail() {
+      document.getElementById('detailPanel').classList.remove('visible');
+      document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
+    }
+
+    // ── Run Pipeline ─────────────────────────────────────────
+    async function runPipeline() {
+      const btn = document.getElementById('runBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Running...';
+      try {
+        await fetch(`${API}/api/run?sample=5000`, { method: 'POST' });
+        await loadSummary();
+        await loadAnomalies();
+        btn.textContent = '✓ Done';
+        setTimeout(() => { btn.textContent = '↻ Run Pipeline'; btn.disabled = false; }, 2000);
+      } catch (e) {
+        btn.textContent = '✗ Failed';
+        setTimeout(() => { btn.textContent = '↻ Run Pipeline'; btn.disabled = false; }, 2000);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>python main.py --sample 5000 --ai

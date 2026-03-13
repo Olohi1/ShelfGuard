@@ -7,6 +7,15 @@ load_dotenv()
 # API Keys
 # ─────────────────────────────────────────
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+GROQ_API_KEY      = os.getenv("GROQ_API_KEY", "")
+
+# ─────────────────────────────────────────
+# Groq / AI Settings
+# ─────────────────────────────────────────
+GROQ_MODEL       = "llama-3.1-8b-instant"
+GROQ_MAX_TOKENS  = 300
+GROQ_TEMPERATURE = 0.3
+AI_ENRICH_TOP_N  = {"CRITICAL": 30, "HIGH": 10, "MEDIUM": 10, "LOW": 0}  # selective enrichment by severity
 
 # ─────────────────────────────────────────
 # File Paths
