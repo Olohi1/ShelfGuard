@@ -11,16 +11,16 @@ ShelfGuard is an AI-assisted data pipeline that automatically detects inventory 
 shelfguard/
 ├── data/
 │   ├── raw/                        # Input CSV files go here
-│   ├── processed/                  # Cleaned data (Day 2)
+│   ├── processed/                  # Cleaned and enriched data
 │   └── reports/                    # Generated JSON reports
 ├── pipeline/
 │   ├── ingestor.py                 # Step 1: Load & validate CSV
 │   ├── normalizer.py               # Step 2: Clean & enrich records
 │   ├── rule_engine.py              # Step 3a: Detect anomalies
 │   └── classifier.py              # Step 3b: Label anomaly type
-├── ai/                             # Day 2: Claude API enrichment
-├── api/                            # Day 3: FastAPI backend
-├── dashboard/                      # Day 3: Frontend UI
+├── ai/                             # AI enrichment module
+├── api/                            # FastAPI backend
+├── dashboard/                      # Frontend UI
 ├── config.py                       # Settings & thresholds
 ├── main.py                         # Pipeline entry point
 └── requirements.txt

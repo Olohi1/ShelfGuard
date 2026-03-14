@@ -8,7 +8,7 @@ Runs the full pipeline:
 Usage:
   python main.py                  # run on full dataset (73,100 records)
   python main.py --sample 5000    # quick demo run
-  python main.py --ai             # enable AI enrichment (Day 2)
+  python main.py --ai             # enable AI enrichment
   python main.py --sample 5000 --ai
 """
 
@@ -57,7 +57,7 @@ def run_pipeline(filepath: str, enrich_with_ai: bool = False, sample: int = None
     classified = classify_all(all_anomaly_records)
     logger.info(f"Classified {len(classified):,} anomalies.")
 
-    # ── Step 5: AI Enrichment (Day 2) ────────────────────────
+    # ── Step 5: AI Enrichment ────────────────────────────
     if enrich_with_ai:
         from ai.enricher import enrich_all
         logger.info("Running AI enrichment...")
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ShelfGuard — Inventory Anomaly Detector")
     parser.add_argument("--file",   default="data/raw/retail_store_inventory_data.csv")
     parser.add_argument("--sample", type=int, default=None, help="Sample N records for quick runs")
-    parser.add_argument("--ai",     action="store_true",    help="Enable AI enrichment (Day 2)")
+    parser.add_argument("--ai",     action="store_true",    help="Enable AI enrichment")
     args = parser.parse_args()
 
     report = run_pipeline(args.file, enrich_with_ai=args.ai, sample=args.sample)

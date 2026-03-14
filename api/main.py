@@ -1,7 +1,6 @@
 """
 api/main.py
------------
-Day 3 of the ShelfGuard pipeline.
+------------
 FastAPI backend that exposes the pipeline as a REST API.
 """
 
